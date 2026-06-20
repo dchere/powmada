@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Threading.Channels;
+using Powmada.Console;
 using Powmada.Engine;
 using Powmada.Ingestion;
 using Powmada.Services;
@@ -15,7 +16,7 @@ namespace Powmada
 
         private static async Task Main(string[] args)
         {
-            Console.WriteLine("========================= Powmada (Power Market Data)  =========================");
+            ConsoleOutput.WriteSectionHeader("Powmada (Power Market Data)", fillChar: '=');
 
             string csvPath = args.Length > 0 ? args[0] : "test_data.csv";
             var reader = new CsvStreamReader(csvPath);
@@ -36,7 +37,7 @@ namespace Powmada
             Task consumerTask = StartClickHouseConsumerAsync(marketDataChannel.Reader, ledger, IngestionBatchSize);
 
             long totalProcessed = 0;
-            Console.WriteLine($"Starting stream processing from: {csvPath}...");
+            ConsoleOutput.WriteLine($"Starting stream processing from: {csvPath}...");
             var stopwatch = Stopwatch.StartNew();
             try
             {
@@ -54,9 +55,7 @@ namespace Powmada
             }
             catch (Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"\nIngestion error: {ex.Message}");
-                Console.ResetColor();
+                ConsoleOutput.WriteError($"Ingestion error: {ex.Message}");
             }
             finally
             {
@@ -69,17 +68,15 @@ namespace Powmada
             }
             catch (Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"\nDB flush failure: {ex.Message}");
-                Console.ResetColor();
+                ConsoleOutput.WriteError($"DB flush failure: {ex.Message}");
             }
 
             stopwatch.Stop();
-            Console.WriteLine($"Processed Events : {totalProcessed:N0}");
-            Console.WriteLine($"Total Duration   : {stopwatch.Elapsed.TotalSeconds:F2} seconds");
-            Console.WriteLine($"Average Velocity : {totalProcessed / stopwatch.Elapsed.TotalSeconds:F0} events/sec");
+            ConsoleOutput.WriteLine($"Processed Events : {totalProcessed:N0}");
+            ConsoleOutput.WriteLine($"Total Duration   : {stopwatch.Elapsed.TotalSeconds:F2} seconds");
+            ConsoleOutput.WriteLine($"Average Velocity : {totalProcessed / stopwatch.Elapsed.TotalSeconds:F0} events/sec");
 
-            Console.WriteLine($"Current Order Book Top {CentralizedBookDepthToShow}:");
+            ConsoleOutput.WriteLine($"Current Order Book Top {CentralizedBookDepthToShow}:");
             orderBook.PrintBookView(CentralizedBookDepthToShow);
 
             // Historical Order Book Reconstruction
@@ -87,7 +84,7 @@ namespace Powmada
             if (minTime > 0 && maxTime > minTime)
             {
                 long randomTargetMs = Random.Shared.NextInt64(minTime, maxTime);
-                Console.WriteLine($"Order Book Top {CentralizedBookDepthToShow} on {DateTimeOffset.FromUnixTimeMilliseconds(randomTargetMs):yyyy-MM-dd HH:mm:ss.fff}");
+                ConsoleOutput.WriteLine($"Order Book Top {CentralizedBookDepthToShow} on {DateTimeOffset.FromUnixTimeMilliseconds(randomTargetMs):yyyy-MM-dd HH:mm:ss.fff}");
 
                 var reconstructor = new HistoricalReconstructor(chContext);
 
@@ -96,7 +93,7 @@ namespace Powmada
                 stopwatch.Stop();
 
                 historicalSnapshot.PrintBookView(CentralizedBookDepthToShow);
-                Console.WriteLine($"Historical replay assembly complete in: {stopwatch.Elapsed.TotalSeconds:F4} seconds");
+                ConsoleOutput.WriteLine($"Historical replay assembly complete in: {stopwatch.Elapsed.TotalSeconds:F4} seconds");
             }
         }
 

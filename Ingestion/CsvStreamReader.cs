@@ -50,8 +50,8 @@ namespace Powmada.Ingestion
 
             /*
              * 2. Price
-             * Convert real price (double) to 10^7 scaled long integer
-             * We assume that the price is always formatted string with '.' separator and 7 digits after it
+             * Convert real price to scaled long integer (PriceScale.Factor).
+             * We assume '.' decimal separator and exactly PriceScale.DecimalDigits fractional digits.
              */
             tokenLength = GetTokenLength(line, startIdx);
             ReadOnlySpan<char> priceSpan = line.Slice(startIdx, tokenLength);
@@ -68,12 +68,13 @@ namespace Powmada.Ingestion
 
             // fractional part of the price
             ReadOnlySpan<char> fractionalSpan = priceSpan.Slice(dotIdx + 1);
-            if (fractionalSpan.Length != 7)
+            if (fractionalSpan.Length != PriceScale.DecimalDigits)
             {
-                throw new FormatException($"Wrong price format: '{priceSpan.ToString()}'. Expected exactly 7 decimal digits after the point.");
+                throw new FormatException(
+                    $"Wrong price format: '{priceSpan.ToString()}'. Expected exactly {PriceScale.DecimalDigits} decimal digits after the point.");
             }
 
-            long scaledPrice = long.Parse(integerSpan, CultureInfo.InvariantCulture) * 10_000_000 +
+            long scaledPrice = long.Parse(integerSpan, CultureInfo.InvariantCulture) * PriceScale.Factor +
                 long.Parse(fractionalSpan, CultureInfo.InvariantCulture);
 
             /* 

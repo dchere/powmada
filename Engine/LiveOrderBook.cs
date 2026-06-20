@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Powmada.Console;
 
 namespace Powmada.Engine
 {
@@ -104,8 +105,14 @@ namespace Powmada.Engine
             // Guard: Order outside of our tracking depth
             if (targetIdx == -1) return;
 
-            // Update quantity field directly inside array layout
+            long[] prices = isBid ? _bidPrices : _askPrices;
+            if (ev.Price != prices[targetIdx])
+                BookDiagnostics.LogInvalidOrderUpdatePrice(in ev, prices[targetIdx]);
+
             int[] quantities = isBid ? _bidQuantities : _askQuantities;
+            if (ev.Quantity > quantities[targetIdx])
+                BookDiagnostics.LogInvalidOrderUpdateUpsizeQuantity(in ev, quantities[targetIdx]);
+
             quantities[targetIdx] = ev.Quantity;
         }
 
@@ -155,25 +162,23 @@ namespace Powmada.Engine
 
         public void PrintBookView(int levelsToPrint)
         {
-            Console.WriteLine("--------------------------------- Asks orders  ---------------------------------");
+            ConsoleOutput.WriteSectionHeader("Asks orders");
             int asksToShow = Math.Min(_askCount, levelsToPrint);
             for (int i = asksToShow - 1; i >= 0; i--)
             {
-                double realPrice = _askPrices[i] / 10_000_000.0;
-                Console.WriteLine($"ID: {_askOrderIds[i]} asks {realPrice:F2} EUR/MWh for {_askQuantities[i]} MW");
+                ConsoleOutput.WriteLine($"ID: {_askOrderIds[i]} asks {PriceScale.FormatedPrice(_askPrices[i])} for {_askQuantities[i]} MW");
             }
-            if (asksToShow == 0) Console.WriteLine("(No Ask liquidity)");
+            if (asksToShow == 0) ConsoleOutput.WriteLine("(No Ask liquidity)");
 
-            Console.WriteLine("--------------------------------- Bids orders  ---------------------------------");
+            ConsoleOutput.WriteSectionHeader("Bids orders");
             int bidsToShow = Math.Min(_bidCount, levelsToPrint);
             for (int i = 0; i < bidsToShow; i++)
             {
-                double realPrice = _bidPrices[i] / 10_000_000.0;
-                Console.WriteLine($"ID: {_bidOrderIds[i]} bids {realPrice:F2} EUR/MWh for {_bidQuantities[i]} MW");
+                ConsoleOutput.WriteLine($"ID: {_bidOrderIds[i]} bids {PriceScale.FormatedPrice(_bidPrices[i])} for {_bidQuantities[i]} MW");
             }
-            if (bidsToShow == 0) Console.WriteLine("(No Bid liquidity)");
+            if (bidsToShow == 0) ConsoleOutput.WriteLine("(No Bid liquidity)");
 
-            Console.WriteLine("--------------------------------------------------------------------------------\n");
+            ConsoleOutput.WriteRule();
         }
     }
 }
