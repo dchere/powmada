@@ -57,7 +57,11 @@ namespace Powmada.Engine
             }
 
             // Guard: order outside of our tracking depth
-            if (index >= MaxDepth) return;
+            if (index >= MaxDepth)
+            {
+                BookDiagnostics.LogDepthOverflowOnInsert(in ev);
+                return;
+            }
 
             int[] quantities = isBid ? _bidQuantities : _askQuantities;
             long[] orderIds = isBid ? _bidOrderIds : _askOrderIds;
@@ -103,7 +107,11 @@ namespace Powmada.Engine
             }
 
             // Guard: Order outside of our tracking depth
-            if (targetIdx == -1) return;
+            if (targetIdx == -1)
+            {
+                BookDiagnostics.LogOrderNotInTrackedDepth(in ev, MarketAction.Update);
+                return;
+            }
 
             long[] prices = isBid ? _bidPrices : _askPrices;
             if (ev.Price != prices[targetIdx])
@@ -135,7 +143,11 @@ namespace Powmada.Engine
             }
 
             // Guard: Order outside of our tracking depth
-            if (targetIdx == -1) return;
+            if (targetIdx == -1)
+            {
+                BookDiagnostics.LogOrderNotInTrackedDepth(in ev, MarketAction.Delete);
+                return;
+            }
 
             // Select remaining matching target structures
             long[] prices = isBid ? _bidPrices : _askPrices;

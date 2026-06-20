@@ -30,5 +30,30 @@ namespace Powmada.Engine
                 $"Invalid quantity upsize on Update: orderId={ev.OrderId} side={ev.Side} action={ev.Action} " +
                 $"timestampMs={ev.TimestampMs} storedQuantity={originalQuantity} eventQuantity={ev.Quantity}");
         }
+
+        /// <summary>
+        /// Insert would exceed the MaxDepth (128) tracked depth. The order is not inserted.
+        /// </summary>
+        /// <param name="ev"></param>
+        public static void LogDepthOverflowOnInsert(in MarketEvent ev)
+        {
+            ConsoleOutput.WriteWarning(
+                $"Insert exceeded MaxDepth (128) tracked depth: orderId={ev.OrderId} side={ev.Side} action={ev.Action} " +
+                $"timestampMs={ev.TimestampMs} price={PriceScale.FormatedPrice(ev.Price)} quantity={ev.Quantity}");
+        }
+
+        /// <summary>
+        /// Update/Delete cannot find orderId in top-128; order outside tracked depth
+        /// (may be due to earlier overflow or never inserted).
+        /// </summary>
+        /// <param name="ev"></param>
+        /// <param name="action"></param>
+        public static void LogOrderNotInTrackedDepth(in MarketEvent ev, MarketAction action)
+        {
+            ConsoleOutput.WriteWarning(
+                $"Update/Delete cannot find orderId in top-128; order outside tracked depth " +
+                $"(may be due to earlier overflow or never inserted): orderId={ev.OrderId} side={ev.Side} action={action} " +
+                $"timestampMs={ev.TimestampMs} price={PriceScale.FormatedPrice(ev.Price)} quantity={ev.Quantity}");
+        }
     }
 }
