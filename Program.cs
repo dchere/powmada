@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Threading.Channels;
 using Powmada.Engine;
 using Powmada.Ingestion;
+using Powmada.Services;
 using Powmada.Storage;
 
 namespace Powmada
@@ -16,7 +17,7 @@ namespace Powmada
         {
             Console.WriteLine("========================= Powmada (Power Market Data)  =========================");
 
-            string csvPath = args.Length > 0 ? args[0] : "testdata.csv";
+            string csvPath = args.Length > 0 ? args[0] : "test_data.csv";
             var reader = new CsvStreamReader(csvPath);
             var orderBook = new LiveOrderBook();
 
@@ -88,7 +89,7 @@ namespace Powmada
                 long randomTargetMs = Random.Shared.NextInt64(minTime, maxTime);
                 Console.WriteLine($"Order Book Top {CentralizedBookDepthToShow} on {DateTimeOffset.FromUnixTimeMilliseconds(randomTargetMs):yyyy-MM-dd HH:mm:ss.fff}");
 
-                var reconstructor = new Powmada.Services.HistoricalReconstructor(chContext);
+                var reconstructor = new HistoricalReconstructor(chContext);
 
                 stopwatch = Stopwatch.StartNew();
                 var historicalSnapshot = reconstructor.ReconstructBookAt(randomTargetMs);
